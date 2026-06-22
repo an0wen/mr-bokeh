@@ -12,8 +12,10 @@ from bokeh.models import (
     CustomJS,
     CustomJSFilter,
     CDSView,
-    Select, MultiSelect, BooleanFilter
+    Select, MultiSelect, BooleanFilter,
+    LogColorMapper, LabelSet
 )
+
 from bokeh.palettes import Cividis
 
 from bokeh.layouts import column, layout, row
@@ -484,6 +486,71 @@ bar = ColorBar(
 p.add_layout(bar, "right")
 
 # Plot the data
+##############################################
+#
+#   SOLAR SYSTEM DATA
+#
+##############################################
+
+# Data for masses and radii of planets (in Earth masses and Earth radii)
+ss_planet_data = {
+    "Mercury": (0.055, 0.383),
+    "Venus": (0.815, 0.949),
+    "Earth": (1.0, 1.0),
+    "Mars": (0.107, 0.532),
+    "Jupiter": (317.8, 11.21),
+    "Saturn": (95.2, 9.45),
+    "Uranus": (14.6, 4.01),
+    "Neptune": (17.2, 3.88),
+}
+
+# Alchemy symbols for planets
+ss_alchemy_symbols = {
+    "Mercury": "☿",
+    "Venus": "♀",
+    "Earth": "⊕",
+    "Mars": "♂",
+    "Jupiter": "♃",
+    "Saturn": "♄",
+    "Uranus": "♅",
+    "Neptune": "♆",
+}
+
+# Extracting data
+ss_planets = list(ss_planet_data.keys())
+ss_masses = [ss_planet_data[planet][0] for planet in ss_planets]
+ss_radii = [ss_planet_data[planet][1] for planet in ss_planets]
+ss_symbols = [ss_alchemy_symbols[planet] for planet in ss_planets]
+
+ss_source = ColumnDataSource(dict(
+    mass=ss_masses,
+    radius=ss_radii,
+    symbol=ss_symbols,
+))
+
+# Plot invisible (or very subtle) markers as anchors
+data_plot_solar = p.scatter(
+    "mass",
+    "radius",
+    source=ss_source,
+    marker="circle",
+    size=1,
+    alpha=0,  # fully transparent — just anchors for the labels
+    legend_label="Solar System",
+)
+
+# Overlay alchemy symbols as text
+ss_labels = LabelSet(
+    x="mass",
+    y="radius",
+    text="symbol",
+    source=ss_source,
+    text_font_size="20pt",
+    text_align="center",
+    text_baseline="middle",
+    text_color="black",  # adjust to suit your background
+)
+p.add_layout(ss_labels)
 data_plot = p.scatter(
     "pl_bmasse",
     "pl_rade",
