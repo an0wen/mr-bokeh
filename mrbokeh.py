@@ -536,7 +536,7 @@ data_plot_solar = p.scatter(
     marker="circle",
     size=1,
     alpha=0,  # fully transparent — just anchors for the labels
-    legend_label="Solar System",
+    #legend_label="Solar System",
 )
 
 # Overlay alchemy symbols as text
@@ -551,6 +551,7 @@ ss_labels = LabelSet(
     text_color="black",  # adjust to suit your background
 )
 p.add_layout(ss_labels)
+
 data_plot = p.scatter(
     "pl_bmasse",
     "pl_rade",
