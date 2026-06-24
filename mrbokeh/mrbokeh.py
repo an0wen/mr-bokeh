@@ -7,15 +7,15 @@ Example:
     Interactive plot of exoplanets with JWST targets
 
         $ python source/mrbokeh.py
+        
+todo:
+   * Many things
+   * Lots of stuff
+   * Add coffee
+   * Aligning and Space formating of scripts
 
-Attributes:
-    None
-
-Todo:
-    * Many things
-    * Lots of stuff
-    * Add coffee
-    * Aligning/Space formating of scripts
+.. _Google Python Style Guide: 
+   http://google.github.io/styleguide/pyguide.html
 
 """
 
@@ -46,7 +46,7 @@ from bokeh.plotting import figure, output_file, save
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from mrbokeh.moustache import moustache
+#from mrbokeh.moustache import moustache
 
 
 # Time of compilation
@@ -55,7 +55,11 @@ ts = datetime.now(ZoneInfo("America/Los_Angeles")).strftime("%Y-%m-%d %H:%M:%S %
 # ------------------------------------------------
 # Load composition curves
 # ------------------------------------------------
-COMP_DIR = "data/mass_radius_composition/"
+
+
+DATA_DIR = os.path.dirname(__file__)
+COMP_DIR = os.path.join(DATA_DIR, "../data/mass_radius_composition/")
+
 lf14 = pd.read_csv(
     COMP_DIR + "master_table_LF14_20201014.csv", comment="#", sep=r"\s+",
 )
@@ -487,4 +491,4 @@ FNAME_OUTPUT = os.path.join(DATA_DIR, "../output/mrbokeh.html")
 output_file(FNAME_OUTPUT, mode="inline")
 save(page_layout)
 print("HTML successfully generated and output to ",FNAME_OUTPUT)
-print(moustache)
+#print(moustache)
