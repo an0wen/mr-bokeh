@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mrbokeh"
+version = "1.0.0"
+
+dependencies = [
+    "os",
+    "numpy",
+    "pandas",
+    "bokeh",
+    "datetime",
+    "zoneinfo",
+]
+
+[tool.setuptools]
+py-modules = []
