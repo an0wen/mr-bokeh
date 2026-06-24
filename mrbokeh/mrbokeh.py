@@ -1,3 +1,24 @@
+# -*- coding: utf-8 -*-
+"""Example Docstring for mrbokeh.
+
+This module demonstrates how to run mtbokeh for exoplanet characterization
+
+Example:
+    Interactive plot of exoplanets with JWST targets
+
+        $ python source/mrbokeh.py
+
+Attributes:
+    None
+
+Todo:
+    * Many things
+    * Lots of stuff
+    * Add coffee
+    * Aligning/Space formating of scripts
+
+"""
+
 import os
 import numpy as np
 import pandas as pd
@@ -25,7 +46,8 @@ from bokeh.plotting import figure, output_file, save
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from source.moustache import moustache
+from mrbokeh.moustache import moustache
+
 
 # Time of compilation
 ts = datetime.now(ZoneInfo("America/Los_Angeles")).strftime("%Y-%m-%d %H:%M:%S %Z")

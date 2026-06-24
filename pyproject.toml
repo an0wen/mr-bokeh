@@ -7,12 +7,9 @@ name = "mrbokeh"
 version = "1.0.0"
 
 dependencies = [
-    "os",
     "numpy",
     "pandas",
     "bokeh",
-    "datetime",
-    "zoneinfo",
 ]
 
 [tool.setuptools]

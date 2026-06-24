@@ -1,0 +1,8 @@
+LICENSE
+README.md
+pyproject.toml
+mrbokeh.egg-info/PKG-INFO
+mrbokeh.egg-info/SOURCES.txt
+mrbokeh.egg-info/dependency_links.txt
+mrbokeh.egg-info/requires.txt
+mrbokeh.egg-info/top_level.txt
