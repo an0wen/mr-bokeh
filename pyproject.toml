@@ -4,13 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mrbokeh"
-version = "1.0.0"
+version = "1.0.1"
 
 dependencies = [
     "numpy",
     "pandas",
     "bokeh",
 ]
-
 [tool.setuptools]
-py-modules = []
+py-modules = ['mrbokeh']
