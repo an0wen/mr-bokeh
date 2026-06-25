@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import matplotlib
+import matplotlib.colors as mcolors
 
 from bokeh.models import (
     ColumnDataSource,
@@ -12,9 +14,16 @@ from bokeh.models import (
     CustomJS,
     CustomJSFilter,
     CDSView,
+    Select, MultiSelect, BooleanFilter,
+    LabelSet,
+    Legend, LegendItem,
+    RangeSlider, CustomJSTickFormatter, DateSlider, DateRangeSlider, TextInput,
+    Toggle,
     Select, MultiSelect, BooleanFilter
 )
 from bokeh.palettes import Cividis
+from bokeh.layouts import column, row
+from bokeh.plotting import figure, output_file, save
 
 from bokeh.layouts import column, layout, row
 from bokeh.models import ColumnDataSource, RangeSlider, CustomJS, CustomJSTickFormatter, DateSlider, DateRangeSlider, TextInput
@@ -33,9 +42,11 @@ COMP_DIR = "data/mass_radius_composition/"
 lf14 = pd.read_csv(
     COMP_DIR + "master_table_LF14_20201014.csv", comment="#", sep=r"\s+",
 )
-lf14_base_mask = lf14["metallicity_solar"] == 1.0
+lf14_base_mask  = lf14["metallicity_solar"] == 1.0
 lf14_base_mask &= lf14["age_Gyr"] == 10.0
 lf14_base_mask &= lf14["F_inc_oplus"] == 10.0
+
+water_rock = np.loadtxt(COMP_DIR + "half_water/" + "massradius_50percentH2O_700K_1mbar.txt")
 # Zeng models
 water_rock = np.loadtxt(
     COMP_DIR + "half_water/" + f"massradius_50percentH2O_700K_1mbar.txt"
@@ -43,6 +54,18 @@ water_rock = np.loadtxt(
 earth_like = np.loadtxt(COMP_DIR + "massradiusEarthlikeRocky.txt")
 fe = np.loadtxt(COMP_DIR + "massradiusFe.txt")
 
+LF14_ENV_FRACS = [0.01, 0.1, 1.0, 5.0, 10.0, 20.0]
+lf14_models = {}
+for f_env_pc in LF14_ENV_FRACS:
+    mask = lf14_base_mask & (lf14["f_env_pc"] == f_env_pc)
+    lf14_models[f_env_pc] = lf14.loc[mask, ["Mass_oplus", "R_oplus"]].to_numpy()
+
+comp_lines = {
+    "earth_like": earth_like,
+    "pure_iron":  fe,
+    "water_rock": water_rock,
+    "lf14":       lf14_models,
+}
 
 def get_marker_radius(mp_precision):
     """
@@ -138,6 +161,9 @@ vecint = np.vectorize(int)
 vecflt = np.vectorize(float)
 data["mass_uplim_flag"] = vecflt(np.isnan(data["pl_bmasse_precision"]))
 
+data["ttv_flag_str"]        = data["ttv_flag"].apply(lambda f: "yes" if f else "no")
+data["mass_uplim_flag_str"] = data["mass_uplim_flag"].apply(lambda f: "yes" if f else "no")
+data["marker_radius"]       = 12
 # Add some additional columns
 data["color"] = data["pl_eqt"].copy()  # data["st_met"].copy()
 data["ttv_flag_str"] = data["ttv_flag"].apply(lambda flag: "yes" if flag else "no")
@@ -474,6 +500,9 @@ p = figure(
     tools=FIG_TOOLS,
 )
 
+# Colorbar — created after p so it attaches correctly
+cmap = LogColorMapper(palette="Plasma256", low=300, high=1500)
+bar  = ColorBar(color_mapper=cmap, location=(0, 0), title="Planet Eq. Temperature [K]")
 # Add the colorbar
 cmap_low = 300  # -0.5
 cmap_high = 1500  # 0.5
@@ -483,8 +512,99 @@ bar = ColorBar(
 )
 p.add_layout(bar, "right")
 
+# ------------------------------------------------
+# Color-variable selector and gray-out toggle
+# ------------------------------------------------
+color_select = Select(
+    title="Color points by:",
+    value="pl_eqt",
+    options=[
+        ("pl_eqt",  "Equilibrium Temperature"),
+        ("pl_tsm",  "TSM"),
+        ("st_teff", "Stellar Teff"),
+    ],
+    width=220,
+)
+
+gray_toggle = Toggle(label="Gray out all points", active=False, width=180)
+
+_palette_map = {k: v["bokeh_palette"] for k, v in COLOR_VARS.items()}
+_low_map     = {k: v["vmin"]          for k, v in COLOR_VARS.items()}
+_high_map    = {k: v["vmax"]          for k, v in COLOR_VARS.items()}
+_title_map   = {k: v["label"]         for k, v in COLOR_VARS.items()}
+
+color_callback = CustomJS(
+    args=dict(
+        source=source,
+        mapper=cmap,
+        bar=bar,
+        select=color_select,
+        toggle=gray_toggle,
+        palette_map=_palette_map,
+        low_map=_low_map,
+        high_map=_high_map,
+        title_map=_title_map,
+    ),
+    code="""
+        const col    = select.value;
+        const grayed = toggle.active;
+        const data   = source.data;
+
+        if (grayed) {
+            data['color'] = data['colors_gray'].slice();
+            bar.visible   = false;
+        } else {
+            data['color']  = data['colors_' + col].slice();
+            bar.visible    = true;
+            bar.title      = title_map[col];
+            mapper.low     = low_map[col];
+            mapper.high    = high_map[col];
+            mapper.palette = palette_map[col];
+            mapper.change.emit();
+        }
+        source.change.emit();
+    """,
+)
+
+color_select.js_on_change("value", color_callback)
+gray_toggle.js_on_change("active", color_callback)
+
+# ------------------------------------------------
+# Solar system overlay
+# ------------------------------------------------
+ss_planet_data = {
+    "Mercury": (0.055, 0.383), "Venus":   (0.815,  0.949),
+    "Earth":   (1.0,   1.0),   "Mars":    (0.107,  0.532),
+    "Jupiter": (317.8, 11.21), "Saturn":  (95.2,   9.45),
+    "Uranus":  (14.6,  4.01),  "Neptune": (17.2,   3.88),
+}
+ss_alchemy_symbols = {
+    "Mercury": "☿", "Venus": "♀", "Earth": "⊕", "Mars": "♂",
+    "Jupiter": "♃", "Saturn": "♄", "Uranus": "♅", "Neptune": "♆",
+}
+ss_planets = list(ss_planet_data.keys())
+ss_source = ColumnDataSource(dict(
+    mass   = [ss_planet_data[p_][0] for p_ in ss_planets],
+    radius = [ss_planet_data[p_][1] for p_ in ss_planets],
+    symbol = [ss_alchemy_symbols[p_] for p_ in ss_planets],
+))
+ss_plot=p.text("mass", "radius", text="symbol",
+       source=ss_source,
+       text_font_size="25pt", text_align="center", text_baseline="middle", text_color="black",
+       legend_label="Solar System"
+       )
+p.scatter([0], [0], marker="circle_cross", legend_label="Solar System",
+          alpha=1.0, line_color="black", fill_color="white",
+          )
+ss_plot.level='overlay'
+# ------------------------------------------------
+# Exoplanet scatter plots
+# ------------------------------------------------
 # Plot the data
 data_plot = p.scatter(
+    "pl_bmasse", "pl_rade", source=source, view=view,
+    fill_color="color",
+    size="marker_radius", alpha=0.9,
     "pl_bmasse",
     "pl_rade",
     source=source,
@@ -494,7 +614,6 @@ data_plot = p.scatter(
     alpha=0.9,
     legend_label="Exoplanets",
 )
-
 data_plot_jwst = p.scatter(
     "pl_bmasse",
     "pl_rade",
@@ -520,6 +639,7 @@ data_plot_features = p.scatter(
     alpha=0.8,
     legend_label="Targets With JWST Features",
 )
+data_plot_features.level = "underlay"
 data_plot_features.level = 'underlay'
 
 # Hover properties for planet data
@@ -548,6 +668,57 @@ DATA_FORMATTERS = {
     "@pl_tsm": "printf",
     "@st_teff": "printf",
 }
+p.add_tools(HoverTool(renderers=[data_plot], tooltips=DATA_TOOLTIPS, formatters=DATA_FORMATTERS))
+
+# ------------------------------------------------
+# Composition model lines
+# ------------------------------------------------
+def plot_models(p, comp_lines):
+    lf14_palette = Cividis[6]
+
+    static_models = [
+        ("earth_like", "Earth-like Rocky", "green"),
+        ("pure_iron",  "Pure Iron",         "gray"),
+        ("water_rock", "50% Water (700K)",  "blue"),
+    ]
+
+    for key, label, color in static_models:
+        arr = comp_lines[key]
+        src = ColumnDataSource(data=dict(
+            x=[r[0] for r in arr],
+            y=[r[1] for r in arr],
+        ))
+        line = p.line("x", "y", source=src,
+                      line_width=4, color=color, alpha=0.8,
+                      legend_label=label)
+        p.add_tools(HoverTool(renderers=[line], tooltips=[("", label)]))
+
+    for i, f_env_pc in enumerate(LF14_ENV_FRACS):
+        label = f"{f_env_pc}% H/He"
+        arr   = comp_lines["lf14"][f_env_pc]
+        src   = ColumnDataSource(data=dict(
+            x=[r[0] for r in arr],
+            y=[r[1] for r in arr],
+        ))
+        line = p.line(
+            "x", "y", source=src,
+            line_width=4, color=lf14_palette[i], alpha=0.8,
+            line_dash="solid", legend_label=label,
+        )
+        p.add_tools(HoverTool(renderers=[line], tooltips=[("", f"LF14: {label}")]))
+
+    p.add_layout(p.legend[0], "right")
+    p.legend.click_policy = "hide"
+
+plot_models(p, comp_lines)
+
+# ------------------------------------------------
+# Final layout
+# ------------------------------------------------
+col1 = column(slider_teff, slider_period, slider_met, slider_eqt, margin=(0, 24, 0, 30))
+col2 = column(slider_tsm, slider_massprec, slider_jmag, slider_ttv)
+col3 = column(color_select, gray_toggle)
+all_widgets = row(col1, col2, col3)
 p.add_tools(
     HoverTool(
         renderers=[data_plot], tooltips=DATA_TOOLTIPS, formatters=DATA_FORMATTERS
