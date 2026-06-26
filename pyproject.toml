@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mrbokeh"
+# dynamic = ["version"]
+version = "1.0.6"
+
+dependencies = [
+    "numpy",
+    "pandas",
+    "bokeh",
+]
+[tool.setuptools]
+py-modules = ['mrbokeh']
+
+# [tool.setuptools.packages.find]
+# where = ["."]
+# include = ["mrbokeh*"]
+
+# [tool.setuptools.dynamic]
+# version = {attr = "mrbokeh.__version__"}
+
+[tool.setuptools.packages]
+find = {}
