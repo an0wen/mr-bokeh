@@ -46,7 +46,7 @@ from bokeh.plotting import figure, output_file, save
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-#from mrbokeh.moustache import moustache
+from mrbokeh.moustache import moustache
 
 
 # Time of compilation
@@ -487,8 +487,10 @@ all_widgets = row(col1, col2)
 
 page_layout = column(p, all_widgets)
 
-FNAME_OUTPUT = os.path.join(DATA_DIR, "../output/mrbokeh.html")
-output_file(FNAME_OUTPUT, mode="inline")
-save(page_layout)
-print("HTML successfully generated and output to ",FNAME_OUTPUT)
-#print(moustache)
+# FNAME_OUTPUT = os.path.join(DATA_DIR, "../output/mrbokeh.html")
+FNAME_OUTPUT_DEFAULT = "./mrbokeh.html"
+def make_plot(FNAME_OUTPUT=FNAME_OUTPUT_DEFAULT):
+    output_file(FNAME_OUTPUT, mode="inline")
+    save(page_layout)
+    print("HTML successfully generated and output to ",FNAME_OUTPUT)
+    print(moustache)

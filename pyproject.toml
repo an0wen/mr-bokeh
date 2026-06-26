@@ -4,7 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mrbokeh"
-version = "1.0.1"
+# dynamic = ["version"]
+version = "1.0.6"
 
 dependencies = [
     "numpy",
@@ -13,3 +14,13 @@ dependencies = [
 ]
 [tool.setuptools]
 py-modules = ['mrbokeh']
+
+# [tool.setuptools.packages.find]
+# where = ["."]
+# include = ["mrbokeh*"]
+
+# [tool.setuptools.dynamic]
+# version = {attr = "mrbokeh.__version__"}
+
+[tool.setuptools.packages]
+find = {}
