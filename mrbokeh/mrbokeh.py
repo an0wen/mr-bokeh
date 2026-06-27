@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Example Docstring for mrbokeh.
 
-This module demonstrates how to run mtbokeh for exoplanet characterization
+This module demonstrates how to run mrbokeh for exoplanet characterization
 
 Example:
     Interactive plot of exoplanets with JWST targets
