@@ -139,8 +139,8 @@ slider_met      = RangeSlider(start=-0.5, end=0.5,  step=0.05, value=(-0.5, 0.5)
 slider_eqt      = RangeSlider(start=100,  end=4100,  step=50,   value=(100, 4100),   title="Planet Equilibrium Temperature (K)")
 slider_tsm      = Slider(start=0,   end=100, step=5,   value=0,  title="TSM Minimum")
 slider_massprec = Slider(start=0,   end=5,   step=1,   value=0,  title="Mass Precision Minimum (sigma)")
-slider_jmag     = Slider(
-    start=3, end=8, step=0.1, value=3,
+slider_jmag     = RangeSlider(
+    start=3, end=8, step=0.1, value=(3, 8),
     title="Bright Limit (Jmag). NIRISS ~3.5. NIRCam LW ~4.7. NIRSpec G395H ~6.5 (G/K) ~7.8 (M)",
 )
 slider_ttv = Slider(start=0, end=1, step=1, value=1, title="Show TTV Planets? (0: No, 1: Yes)")
