@@ -94,8 +94,8 @@ DATA_DIR = os.path.dirname(__file__)
 FNAME = os.path.join(DATA_DIR, "../data/nea_cleaned_filled_withTSM_2025-08-20.csv")
 data = pd.read_csv(FNAME, comment="#")
 
-data["pl_bmasseerr"] = np.mean(np.abs(data[["pl_bmasseerr1", "pl_bmasseerr2"]]), axis=1)
-data["pl_radeerr"]   = np.mean(np.abs(data[["pl_radeerr1",   "pl_radeerr2"]]),   axis=1)
+data["pl_bmasseerr"] = data[["pl_bmasseerr1", "pl_bmasseerr2"]].abs().mean(axis=1)
+data["pl_radeerr"]   = data[["pl_radeerr1"  , "pl_radeerr2"  ]].abs().mean(axis=1)
 
 data["pl_bmasse_precision"] = data["pl_bmasse"] / data["pl_bmasseerr"]
 data["pl_rade_precision"]   = data["pl_rade"]   / data["pl_radeerr"]
