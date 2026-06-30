@@ -32,7 +32,7 @@ from bokeh.models import (
     CheckboxGroup,
     CustomJS,
     CustomJSFilter,
-    CDSView,
+    CDSView, Div,
     Select, MultiSelect, BooleanFilter,
     LabelSet,
     Legend, LegendItem,
@@ -50,7 +50,7 @@ from mrbokeh.moustache import moustache
 
 
 # Time of compilation
-ts = datetime.now(ZoneInfo("America/Los_Angeles")).strftime("%Y-%m-%d %H:%M:%S %Z")
+ts = datetime.now(ZoneInfo("America/Los_Angeles")).strftime("%Y-%m-%d %H:%M:%`S` %Z")
 
 # ------------------------------------------------
 # Load composition curves
@@ -147,10 +147,10 @@ slider_period = RangeSlider(
 )
 slider_met      = RangeSlider(start=-0.5, end=0.5,  step=0.05, value=(-0.5, 0.5),  title="[Fe/H]")
 slider_eqt      = RangeSlider(start=100,  end=4100,  step=50,   value=(100, 4100),   title="Planet Equilibrium Temperature (K)")
-slider_tsm      = Slider(start=0,   end=100, step=5,   value=0,  title="TSM Minimum")
-slider_massprec = Slider(start=0,   end=5,   step=1,   value=0,  title="Mass Precision Minimum (sigma)")
+slider_tsm      = RangeSlider(start=0,   end=100, step=5,   value=(0, 100),  title="TSM Minimum")
+slider_massprec = RangeSlider(start=0,   end=5,   step=1,   value=(0, 5),  title="Mass Precision Minimum (sigma)")
 slider_jmag     = RangeSlider(
-    start=3, end=8, step=0.1, value=(3, 8),
+    start=3, end=8, step=0.1, value=(0, 50),
     title="Bright Limit (Jmag). NIRISS ~3.5. NIRCam LW ~4.7. NIRSpec G395H ~6.5 (G/K) ~7.8 (M)",
 )
 slider_ttv = Slider(start=0, end=1, step=1, value=1, title="Show TTV Planets? (0: No, 1: Yes)")
@@ -160,20 +160,26 @@ filters_def = [
     ("pl_orbper",           "rangelog", slider_period),
     ("st_met",              "range",    slider_met),
     ("pl_eqt",              "range",    slider_eqt),
-    ("pl_tsm",              "scalar",   slider_tsm),
-    ("pl_bmasse_precision", "scalar",   slider_massprec),
-    ("sy_jmag",             "scalar",   slider_jmag),
+    ("pl_tsm",              "range",   slider_tsm),
+    ("pl_bmasse_precision", "range",   slider_massprec),
+    ("sy_jmag",             "range",   slider_jmag),
     ("ttv_flag",            "ttv",      slider_ttv),
 ]
 filters_cols    = [c for c, _, _ in filters_def]
 filters_kinds   = [k for _, k, _ in filters_def]
 filters_widgets = [w for _, _, w in filters_def]
-
+# ------------------------------------------------
+# Creating a variable that will count the amount of exoplanets that are not filtered out
+# ------------------------------------------------
+count_div = Div(
+    text=f"<b>Exoplanets on graph:</b> {len(source.data[next(iter(source.data))])}",
+    width=200
+)
 # ------------------------------------------------
 # Combined CustomJSFilter for all sliders
 # ------------------------------------------------
 filter_combo = CustomJSFilter(
-    args=dict(src=source, widgets=filters_widgets, kinds=filters_kinds, cols=filters_cols),
+    args=dict(src=source, widgets=filters_widgets, kinds=filters_kinds, cols=filters_cols, count_div = count_div),
     code="""
     const data = src.data;
     const n = data[cols[0]].length;
@@ -211,6 +217,7 @@ filter_combo = CustomJSFilter(
         }
         keep.push(i);
     }
+    count_div.text = `<b>Exoplanets on graph:</b> ${keep.length}`;
     return keep;
 """)
 
@@ -495,7 +502,7 @@ col2 = column(slider_tsm, slider_massprec, slider_jmag, slider_ttv)
 # )
 all_widgets = row(col1, col2)
 
-page_layout = column(p, all_widgets)
+page_layout = column(p, all_widgets, count_div)
 
 # FNAME_OUTPUT = os.path.join(DATA_DIR, "../output/mrbokeh.html")
 FNAME_OUTPUT_DEFAULT = "./mrbokeh.html"
