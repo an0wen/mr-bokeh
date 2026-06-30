@@ -91,8 +91,18 @@ comp_lines = {
 # Load and prepare the planet data
 # ------------------------------------------------
 DATA_DIR = os.path.dirname(__file__)
-FNAME = os.path.join(DATA_DIR, "../data/nea_cleaned_filled_withTSM_2025-08-20.csv")
-data = pd.read_csv(FNAME, comment="#")
+FNAME = os.path.join(DATA_DIR, "../data/nea_cleaned_filled_withTSM_2026-06-26.csv")
+
+# Count the number of comments at the begining of the file
+with open(FNAME, encoding="utf-8") as f:
+    nskip = 0
+    for line in f:
+        if line.startswith("#"):
+            nskip += 1
+        else:
+            break
+
+data = pd.read_csv(FNAME, skiprows=nskip)
 
 data["pl_bmasseerr"] = data[["pl_bmasseerr1", "pl_bmasseerr2"]].abs().mean(axis=1)
 data["pl_radeerr"]   = data[["pl_radeerr1"  , "pl_radeerr2"  ]].abs().mean(axis=1)

@@ -1,6 +1,8 @@
+build
 data
 dist
 docs
 mrbokeh
 output
 test
+tests
